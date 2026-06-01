@@ -1,32 +1,31 @@
 import datetime
-#from idlelib import query
 import logging
-import json
-import asyncio
 import aiohttp
-from collections import defaultdict
+
 
 from telegram import Update, InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 from dotenv import load_dotenv
 
-# Загрузка переменных окружения
+
 load_dotenv()
 
-# Настройка логирования
+
+
+
 logging.basicConfig(
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 
-# Конфигурация
+
 TELEGRAM_TOKEN = '7955745574:AAE4r3CJ7cjA87xWytXOESINi4I6kgIRKd8'
 MUSEUM_API_URL = "https://www.tretyakovgallery.ru/api/content/events/"
 MUSEUM_URL = "https://www.tretyakovgallery.ru"
 MUSEUM_API_URL_EX = 'https://www.tretyakovgallery.ru/api/content/exhibitions'
 
-# Глобальные переменные (лучше заменить на базу данных)
+
 alt_counter_allv = 0
 alt_counter_postoyan = 0
 alt_counter_vnesh = 0
@@ -263,7 +262,6 @@ async def allv_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text("Увидеть больше /more")
 
-    #return  alt_counter_allv
 
 async def more_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Показать еще события (команда /more)"""
@@ -277,7 +275,6 @@ async def more_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     items = events_data['data']['items']
 
-    # Показываем по 5 событий за раз
     start_index = alt_counter_allv
     end_index = min(start_index + 5, len(items))
 
@@ -373,9 +370,6 @@ async def vnesh_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             continue
 
     await update.message.reply_text("Увидеть больше /more")
-
-    # return  alt_counter_vnesh
-
 
 async def more_vnesh_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Показать еще события (команда /more_vnesh)"""
@@ -485,8 +479,6 @@ async def bud_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text("Увидеть больше /more_bud")
 
-    # return  alt_counter_vnesh
-
 
 async def more_bud_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Показать еще события (команда /more_bud)"""
@@ -500,7 +492,6 @@ async def more_bud_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     items = events_data['data']['items']
 
-    # Показываем по 5 событий за раз
     start_index = alt_counter_bud
     end_index = min(start_index + 5, len(items))
 
@@ -545,7 +536,7 @@ async def more_bud_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     else:
         await update.message.reply_text("Вы просмотрели все события!  \n Для просмотра меню нажмите /start")
 
-#============получение списка постоянных экспозиций и больше========
+#============Получение списка постоянных экспозиций и больше========
 async def postoyan_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Все постоянные события (команда /postoyan)"""
     global alt_counter_postoyan
@@ -571,7 +562,6 @@ async def postoyan_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
             start_date = datetime.datetime.fromtimestamp(start_date_unix).strftime('%d.%m.%Y') if start_date_unix else 'Не указано'
             end_date = datetime.datetime.fromtimestamp(end_date_unix).strftime('%d.%m.%Y') if end_date_unix else 'Не указано'
 
-            #hashtag = event.get('hashtag', 'Не указано')
 
             temp_url = event.get('url', '')
             url = f"{MUSEUM_URL}{temp_url}" if temp_url else MUSEUM_URL
@@ -594,7 +584,6 @@ async def postoyan_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await update.message.reply_text("Увидеть больше /more_postoyan")
 
-    #return  alt_counter_allv
 
 async def more_postoyan_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Показать еще постоянные события (команда /more_postoyan)"""
@@ -608,7 +597,6 @@ async def more_postoyan_command(update: Update, context: ContextTypes.DEFAULT_TY
 
     items = events_data['data']['items']
 
-    # Показываем по 5 событий за раз
     start_index = alt_counter_postoyan
     end_index = min(start_index + 5, len(items))
 
@@ -628,7 +616,6 @@ async def more_postoyan_command(update: Update, context: ContextTypes.DEFAULT_TY
             start_date = datetime.datetime.fromtimestamp(start_date_unix).strftime('%d.%m.%Y') if start_date_unix else 'Не указано'
             end_date = datetime.datetime.fromtimestamp(end_date_unix).strftime('%d.%m.%Y') if end_date_unix else 'Не указано'
 
-            #hashtag = event.get('hashtag', 'Не указано')
 
             temp_url = event.get('url', '')
             url = f"{MUSEUM_URL}{temp_url}" if temp_url else MUSEUM_URL
@@ -708,30 +695,22 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not query:
         return
 
-    # Отвечаем на callback
     await query.answer()
 
-    # Определяем какая кнопка нажата
     if query.data == 'events':
-        # Сохраняем исходное сообщение
         original_message = query.message.text
 
-        # Временно показываем "Загрузка..."
         await query.edit_message_text(
             text="🔄 Загружаю ближайшие события...",
             parse_mode='Markdown'
         )
 
-        # Создаем фейковый update для вызова функции
-        # (Не самый красивый способ, но работает)
         try:
-            # Используем context для создания сообщения
             await context.bot.send_message(
                 chat_id=query.message.chat_id,
                 text="🎭 **Ближайшие события:**"
             )
 
-            # Получаем события
             events_data = await get_events(5)
 
             if events_data and 'data' in events_data and 'items' in events_data['data']:
@@ -776,7 +755,6 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     text="На данный момент событий нет. \n Нажмите, чтобы открыть меню /start"
                 )
 
-            # Восстанавливаем исходное меню
             keyboard = [
                 [
                     InlineKeyboardButton("Ближайшие события", callback_data='events')
@@ -806,24 +784,19 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
     elif query.data == 'allv':
-        # Аналогичная логика для allv
         await query.edit_message_text(
             text="🔄 Загружаю Все события...",
             parse_mode='Markdown'
         )
 
         try:
-            # Здесь аналогичная логика как для events
             await context.bot.send_message(
                 chat_id=query.message.chat_id,
                 text="🎭 **Все события:**"
             )
 
-            # Вызов allv_command через имитацию
-            # (В реальном проекте лучше вынести общую логику в отдельную функцию)
             await allv_command_simulated(context, query.message.chat_id)
 
-            # Восстанавливаем меню
             keyboard = [
                 [
                     InlineKeyboardButton("Ближайшие события", callback_data='events')
@@ -855,24 +828,19 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 #==
 
     elif query.data == 'vnesh':
-        # Аналогичная логика для vnesh
         await query.edit_message_text(
             text="🔄 Загружаю внешние выставки...",
             parse_mode='Markdown'
         )
 
         try:
-            # Здесь аналогичная логика как для events
             await context.bot.send_message(
                 chat_id=query.message.chat_id,
                 text="🎭 **Внешние выставки:**"
             )
 
-            # Вызов allv_command через имитацию
-            # (В реальном проекте лучше вынести общую логику в отдельную функцию)
             await vnesh_command_simulated(context, query.message.chat_id)
 
-            # Восстанавливаем меню
             keyboard = [
                 [
                     InlineKeyboardButton("Ближайшие события", callback_data='events')
@@ -902,27 +870,20 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
             )
 
 
-
-
     elif query.data == 'bud':
-        # Аналогичная логика для vnesh
         await query.edit_message_text(
             text="🔄 Загружаю будущие выставки...",
             parse_mode='Markdown'
         )
 
         try:
-            # Здесь аналогичная логика как для events
             await context.bot.send_message(
                 chat_id=query.message.chat_id,
                 text="🎭 **Будущие выставки:**"
             )
 
-            # Вызов allv_command через имитацию
-            # (В реальном проекте лучше вынести общую логику в отдельную функцию)
             await bud_command_simulated(context, query.message.chat_id)
 
-            # Восстанавливаем меню
             keyboard = [
                 [
                     InlineKeyboardButton("Ближайшие события", callback_data='events')
@@ -953,24 +914,19 @@ async def button_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 #===
 #========================
     elif query.data == 'postoyan':
-        # Аналогичная логика для vnesh
         await query.edit_message_text(
             text="🔄 Загружаю постоянные экспозиции...",
             parse_mode='Markdown'
         )
 
         try:
-            # Здесь аналогичная логика как для events
             await context.bot.send_message(
                 chat_id=query.message.chat_id,
                 text="🎭 **Постоянные экспозиции:**"
             )
 
-            # Вызов allv_command через имитацию
-            # (В реальном проекте лучше вынести общую логику в отдельную функцию)
             await postoyan_command_simulated(context, query.message.chat_id)
 
-            # Восстанавливаем меню
             keyboard = [
                 [
                     InlineKeyboardButton("Ближайшие события", callback_data='events')
@@ -1206,10 +1162,8 @@ def main():
     if not TELEGRAM_TOKEN:
         raise ValueError("Не задан TELEGRAM_TOKEN")
 
-    # Создание приложения
     application = Application.builder().token(TELEGRAM_TOKEN).build()
 
-    # Регистрация обработчиков команд
     application.add_handler(CommandHandler("start", start))
     application.add_handler(CommandHandler("events", events_command))
     application.add_handler(CommandHandler("allv", allv_command))
@@ -1221,10 +1175,8 @@ def main():
     application.add_handler(CommandHandler("postoyan", postoyan_command))
     application.add_handler(CommandHandler("more_postoyan", more_postoyan_command))
 
-    # Регистрация обработчика кнопок
     application.add_handler(CallbackQueryHandler(button_handler))
 
-    # Запуск бота
     logger.info("🤖 Бот запущен...")
 
     try:
